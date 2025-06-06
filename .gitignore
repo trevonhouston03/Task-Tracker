@@ -1,0 +1,83 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Production builds
+/frontend/dist/
+/backend/dist/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker
+.dockerignore
+
+### cloudbuild-frontend.yaml
+```yaml
+steps:
+  # Build the frontend Docker image with build-time env var
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build', 
+      '--build-arg', 'VITE_API_URL=YOUR_BACKEND_DEPLOYMENT_URL_HERE',
+      '-t', 'gcr.io/$PROJECT_ID/task-frontend', 
+      './frontend'
+    ]
+  
+  # Push the image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/task-frontend']
+  
+  # Deploy to Cloud Run
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args: [
+      'run', 'deploy', 'task-frontend',
+      '--image', 'gcr.io/$PROJECT_ID/task-frontend',
+      '--platform', 'managed',
+      '--region', 'us-central1',
+      '--allow-unauthenticated',
+      '--port', '80'
+    ]
+
+options:
+  logging: CLOUD_LOGGING_ONLY
